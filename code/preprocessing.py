@@ -8,7 +8,7 @@ TAG = 1
 
 
 class FeatureStatistics:
-    def _init_(self):
+    def __init__(self):
         self.n_total_features = 0  # Total number of features accumulated
 
         # Init all features dictionaries
@@ -100,7 +100,7 @@ class FeatureStatistics:
 
 
 class Feature2id:
-    def _init_(self, feature_statistics: FeatureStatistics, threshold: int):
+    def __init__(self, feature_statistics: FeatureStatistics, threshold: int):
         """
         @param feature_statistics: the feature statistics object
         @param threshold: the minimal number of appearances a feature should have to be taken
@@ -216,6 +216,7 @@ def preprocess_train(train_path, threshold):
     # Statistics
     statistics = FeatureStatistics()
     statistics.get_word_tag_pair_count(train_path)
+
 
     # feature2id
     feature2id = Feature2id(statistics, threshold)

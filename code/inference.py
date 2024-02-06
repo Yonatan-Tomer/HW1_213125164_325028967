@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import sparse
 
 from preprocessing import read_test
 from tqdm import tqdm
@@ -15,25 +16,26 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id):
     beam = 3
     best_past_tags = {("", ""): (1, ["", ""])}
     all_tags = feature2id.feature_statistics.tags
+    features_num = feature2id.n_total_features
     # calc best route
-    for k in range(2, n):  # scan over all histories
+    for k in range(2, n-1):  # scan over all histories
         c_pi = {}  # current probability matrix
         for pp_tag, p_tag in best_past_tags:  # scan for every beam
-            feature_vectors = {}  # the feature vectors of all history combinations
+            exp_weights_dot_feature_vectors = {}  # the feature vectors of all history combinations
+            # create feature vectors
             for c_tag in all_tags:
-                hist_ = history(k, pp_tag, p_tag, c_tag)
+                hist_ = history(sentence, k, pp_tag, p_tag, c_tag)
                 feature_vector = np.array(represent_input_with_features(hist_, feature2id.feature_to_idx))
-                feature_vectors[c_tag] = feature_vector
+                sparse_vector = feature_vector_to_sparse(feature_vector, features_num)
+                exp_weights_dot_feature_vectors[c_tag] = np.exp(pre_trained_weights @ sparse_vector)
             # the denominator for calculating c_pi
-
-            denominator = sum([np.exp(np.dot(pre_trained_weights, feature_vectors[c_tag])) for c_tag in all_tags])
+            denominator = sum([exp_weights_dot_feature_vectors[c_tag] for c_tag in all_tags])
 
             for c_tag in all_tags:  # find the best one-step routs from all beams
-                feature_vector = feature_vectors[c_tag]
-                soft_max_ = soft_max(pre_trained_weights, feature_vector, denominator)
+                soft_max_ = exp_weights_dot_feature_vectors[c_tag] / denominator
 
                 curr_prob = soft_max_ * best_past_tags[(pp_tag, p_tag)][0]
-                if not c_pi[(p_tag, c_tag)] or curr_prob > c_pi[(p_tag, c_tag)]:
+                if (p_tag, c_tag) not in c_pi or curr_prob > c_pi[(p_tag, c_tag)][0]:
                     c_pi[(p_tag, c_tag)] = [curr_prob, best_past_tags[(pp_tag, p_tag)][1] + [c_tag]]
         # save {beam} best routs
         best_past_tags = {}
@@ -48,8 +50,13 @@ def history(sentence, k, pp_tag, p_tag, c_tag):
     return sentence[k], c_tag, sentence[k - 1], p_tag, sentence[k - 2], pp_tag, sentence[k + 1]
 
 
-def soft_max(weights, feature_vector, denominator):
-    return np.exp(weights * feature_vector) / denominator
+def feature_vector_to_sparse(feature_vector, features_num):
+    n = feature_vector.shape[0]
+    data = np.ones(n)
+    col = np.zeros(n)
+    row = feature_vector
+    return sparse.bsr_array((data, (row, col)), shape=(features_num, 1))
+
 
 
 def tag_all_test(test_path, pre_trained_weights, feature2id, predictions_path):
