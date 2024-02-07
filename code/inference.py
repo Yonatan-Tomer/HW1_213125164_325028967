@@ -14,7 +14,7 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id):
     """
     n = len(sentence)
     beam = 3
-    best_past_tags = {("", ""): (1, ["", ""])}
+    best_past_tags = {("*", "*"): (1, ["*", "*"])}
     all_tags = feature2id.feature_statistics.tags
     features_num = feature2id.n_total_features
     # calc best route
@@ -26,10 +26,10 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id):
             for c_tag in all_tags:
                 hist_ = history(sentence, k, pp_tag, p_tag, c_tag)
                 feature_vector = np.array(represent_input_with_features(hist_, feature2id.feature_to_idx))
-                sparse_vector = feature_vector_to_sparse(feature_vector, features_num)
-                exp_weights_dot_feature_vectors[c_tag] = np.exp(pre_trained_weights @ sparse_vector)
+                dot_product = np.sum(pre_trained_weights[feature_vector])
+                exp_weights_dot_feature_vectors[c_tag] = np.exp(dot_product)
             # the denominator for calculating c_pi
-            denominator = sum([exp_weights_dot_feature_vectors[c_tag] for c_tag in all_tags])
+            denominator = sum(exp_weights_dot_feature_vectors.values())
 
             for c_tag in all_tags:  # find the best one-step routs from all beams
                 soft_max_ = exp_weights_dot_feature_vectors[c_tag] / denominator
@@ -48,15 +48,6 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id):
 
 def history(sentence, k, pp_tag, p_tag, c_tag):
     return sentence[k], c_tag, sentence[k - 1], p_tag, sentence[k - 2], pp_tag, sentence[k + 1]
-
-
-def feature_vector_to_sparse(feature_vector, features_num):
-    n = feature_vector.shape[0]
-    data = np.ones(n)
-    col = np.zeros(n)
-    row = feature_vector
-    return sparse.bsr_array((data, (row, col)), shape=(features_num, 1))
-
 
 
 def tag_all_test(test_path, pre_trained_weights, feature2id, predictions_path):
