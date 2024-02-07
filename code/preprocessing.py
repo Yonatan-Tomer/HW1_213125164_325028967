@@ -241,7 +241,7 @@ def read_test(file_path, tagged=True) -> List[Tuple[List[str], List[str]]]:
         for line in f:
             if line[-1:] == "\n":
                 line = line[:-1]
-            sentence = (["", ""], ["", ""])
+            sentence = (["*", "*"], ["*", "*"])
             split_words = line.split(' ')
             for word_idx in range(len(split_words)):
                 if tagged:
