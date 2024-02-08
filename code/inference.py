@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import sparse
 
 from preprocessing import read_test
 from tqdm import tqdm
@@ -13,8 +12,8 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id):
     Implement q efficiently (refer to conditional probability definition in MEMM slides)
     """
     n = len(sentence)
-    beam = 3
-    best_past_tags = {("*", "*"): (1, ["*", "*"])}
+    beam = 10
+    best_past_tags = {("*", "*"): (1, ("*", "*"))}
     all_tags = feature2id.feature_statistics.tags
     features_num = feature2id.n_total_features
     # calc best route
@@ -36,14 +35,14 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id):
 
                 curr_prob = soft_max_ * best_past_tags[(pp_tag, p_tag)][0]
                 if (p_tag, c_tag) not in c_pi or curr_prob > c_pi[(p_tag, c_tag)][0]:
-                    c_pi[(p_tag, c_tag)] = [curr_prob, best_past_tags[(pp_tag, p_tag)][1] + [c_tag]]
+                    c_pi[(p_tag, c_tag)] = [curr_prob, best_past_tags[(pp_tag, p_tag)][1] + (c_tag,)]
         # save {beam} best routs
         best_past_tags = {}
         for pp_tag, p_tag in sorted(c_pi, key=c_pi.get, reverse=False)[:beam]:
             best_past_tags[(pp_tag, p_tag)] = c_pi[(pp_tag, p_tag)]
 
     # pick best route
-    return max(best_past_tags)[1]
+    return best_past_tags[max(best_past_tags)][1]
 
 
 def history(sentence, k, pp_tag, p_tag, c_tag):
@@ -54,11 +53,11 @@ def tag_all_test(test_path, pre_trained_weights, feature2id, predictions_path):
     tagged = "test" in test_path
     test = read_test(test_path, tagged=tagged)
 
-    output_file = open(predictions_path, "a+")
+    output_file = open(predictions_path, "w")
 
     for k, sen in tqdm(enumerate(test), total=len(test)):
         sentence = sen[0]
-        pred = memm_viterbi(sentence, pre_trained_weights, feature2id)[1:]
+        pred = memm_viterbi(sentence, pre_trained_weights, feature2id)[2:]
         sentence = sentence[2:]
         for i in range(len(pred)):
             if i > 0:

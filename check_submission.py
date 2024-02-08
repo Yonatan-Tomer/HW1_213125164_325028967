@@ -7,8 +7,8 @@ import zipfile
 import shutil
 
 COMP_FILES_PATH = 'comps files'
-ID1 = input("insert ID1: ")
-ID2 = input("insert ID2: ")
+ID1 = 213125164
+ID2 = 325028967
 
 def unzip_directory(zip_path, output_path):
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
@@ -99,7 +99,7 @@ def calc_scores(e):
             comp1, prob1 = compare_files('data/comp1.wtag_public', comp1_file)
             comp1 = round(comp1 * 100, 2)
         if len(comp2_file) != 1:
-            print(f'{sub} ha a Problem with m2!')
+            print(f'{sub} has a Problem with m2!')
             e = True
             comp2 = None
         else:
@@ -128,6 +128,7 @@ def calc_scores(e):
     scores = pd.DataFrame(scores)
     scores.to_csv('scores.csv')
 
+
 def open_zip():
     errors = False
     zip_file_path = f"HW1_{ID1}_{ID2}.zip"
@@ -149,6 +150,7 @@ def open_zip():
     for file in comp_files:
         shutil.copy(os.path.join(output_directory_path, file), os.path.join(COMP_FILES_PATH, f"{ID1}_{ID2}"))
     return errors
+
 
 if __name__ == '__main__':
     e = open_zip()
