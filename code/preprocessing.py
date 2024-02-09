@@ -42,57 +42,25 @@ class FeatureStatistics:
                     self.tags.add(cur_tag)
                     self.tags_counts[cur_tag] += 1
                     self.words_count[cur_word] += 1
-                    # todo put f100 with other feature sets
-                    self.count_feature_data("f100", (cur_word.lower(), cur_tag))
 
-                sentence = [("", ""), ("", "")]
+                sentence = [("*", "*"), ("*", "*")]
                 for pair in split_words:
                     sentence.append(tuple(pair.split("_")))
-                sentence.append(("", ""))
+                sentence.append(("~", "~"))
 
                 for i in range(2, len(sentence) - 1):
                     history = (
                         sentence[i][WORD], sentence[i][TAG], sentence[i - 1][WORD], sentence[i - 1][TAG],
                         sentence[i - 2][WORD],
                         sentence[i - 2][TAG], sentence[i + 1][WORD])
-                    # f101 & f102
-                    word_len = len(sentence[i][WORD])
-                    for j in range(0, min(word_len, 4)):
-                        feature_data_101 = (sentence[i][WORD][word_len - j - 1:].lower(), sentence[i][TAG])
-                        feature_data_102 = (sentence[i][WORD][:j + 1].lower(), sentence[i][TAG])
 
-                        self.count_feature_data("f101", feature_data_101)
-                        self.count_feature_data("f102", feature_data_102)
-                    # f103
-                    feature_data_103 = (sentence[i - 2][TAG], sentence[i - 1][TAG], sentence[i][TAG])
-                    self.count_feature_data("f103", feature_data_103)
-                    # f104
-                    feature_data_104 = (sentence[i - 1][TAG], sentence[i][TAG])
-                    self.count_feature_data("f104", feature_data_104)
-                    # f105
-                    feature_data_105 = (sentence[i][TAG])
-                    self.count_feature_data("f105", feature_data_105)
-                    # f106
-                    feature_data_106 = (sentence[i - 1][WORD].lower(), sentence[i][TAG])
-                    self.count_feature_data("f106", feature_data_106)
-                    # f107
-                    feature_data_107 = (sentence[i + 1][WORD].lower(), sentence[i][TAG])
-                    self.count_feature_data("f107", feature_data_107)
-
-                    # capital
-                    feature_data_capital = sentence[i][WORD][0]
-                    if feature_data_capital.isupper():
-                        self.count_feature_data("capital", feature_data_capital)
-                        self.count_feature_data("capital", True)
-                    else:
-                        self.count_feature_data("capital", False)
-
-                    # number
-                    self.count_feature_data("number", sentence[i][WORD].isnumeric())
+                    data_class_pairs = history_to_data_and_class(history)
+                    for feature_data, feature_class in data_class_pairs:
+                        self.count_feature_data(feature_data, feature_class)
 
                     self.histories.append(history)
 
-    def count_feature_data(self, feature_class, feature_data):
+    def count_feature_data(self, feature_data, feature_class):
         if feature_data not in self.feature_rep_dict[feature_class]:
             self.feature_rep_dict[feature_class][feature_data] = 1
         else:
@@ -166,24 +134,16 @@ class Feature2id:
                 self.feature_statistics.histories), self.n_total_features), dtype=bool)
 
 
-def represent_input_with_features(history: Tuple, dict_of_dicts: Dict[str, Dict[Tuple[str, str], int]]) \
-        -> List[int]:
-    """
-        Extract feature vector in per a given history
-        @param history: tuple{c_word, c_tag, p_word, p_tag, pp_word, pp_tag, n_word}
-        @param dict_of_dicts: a dictionary of each feature and the index it was given
-        @return a list with all features that are relevant to the given history
-    """
+def history_to_data_and_class(history: Tuple):
     c_word, c_tag, p_word, p_tag, pp_word, pp_tag, n_word = history
-    features = []
     data_class_pairs = [
-        ((c_word.lower(), c_tag), "f100"),
+        ((c_word, c_tag), "f100"),
         ((pp_tag, p_tag, c_tag), "f103"),
         ((p_tag, c_tag), "f104"),
         (c_tag, "f105"),
-        ((p_word.lower(), c_tag), "f106"),
-        ((n_word.lower(), c_tag), "f107"),
-        (c_word.isnumeric(), "number")
+        ((p_word, c_tag), "f106"),
+        ((n_word, c_tag), "f107"),
+        ((c_word.isnumeric(), c_tag), "number")
     ]
     word_len = len(c_word)
     for i in range(0, min(word_len, 4)):
@@ -192,11 +152,24 @@ def represent_input_with_features(history: Tuple, dict_of_dicts: Dict[str, Dict[
 
     # capital
     if c_word[0].isupper():
-        data_class_pairs.append((c_word[0], "capital"))
-        data_class_pairs.append((True, "capital"))
+        data_class_pairs.append(((c_word[0], c_tag), "capital"))
+        data_class_pairs.append(((True, c_tag), "capital"))
     else:
-        data_class_pairs.append((False, "capital"))
+        data_class_pairs.append(((False, c_tag), "capital"))
 
+    return data_class_pairs
+
+
+def represent_input_with_features(history: Tuple, dict_of_dicts: Dict[str, Dict[Tuple[str, str], int]]) \
+        -> List[int]:
+    """
+        Extract feature vector in per a given history
+        @param history: tuple{c_word, c_tag, p_word, p_tag, pp_word, pp_tag, n_word}
+        @param dict_of_dicts: a dictionary of each feature and the index it was given
+        @return a list with all ids features that are relevant to the given history
+    """
+    features = []
+    data_class_pairs = history_to_data_and_class(history)
     for feature_data, feature_class in data_class_pairs:
         append_idx_if_exists(feature_data, feature_class, dict_of_dicts, features)
 
@@ -216,7 +189,6 @@ def preprocess_train(train_path, threshold):
     # Statistics
     statistics = FeatureStatistics()
     statistics.get_word_tag_pair_count(train_path)
-
 
     # feature2id
     feature2id = Feature2id(statistics, threshold)
