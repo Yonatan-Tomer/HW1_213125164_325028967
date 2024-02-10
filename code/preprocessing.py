@@ -6,6 +6,8 @@ from typing import List, Dict, Tuple
 WORD = 0
 TAG = 1
 
+FEATURE_CLASSES = ["f100", "f101", "f102", "f103", "f104", "f105", "f106", "f107", 'capital', 'number']
+
 
 class FeatureStatistics:
     def __init__(self):
@@ -13,8 +15,7 @@ class FeatureStatistics:
 
         # Init all features dictionaries
         # the feature classes used in ,the code
-        feature_dict_list = ["f100", "f101", "f102", "f103", "f104", "f105", "f106", "f107", 'capital', 'number']
-        self.feature_rep_dict = {fd: OrderedDict() for fd in feature_dict_list}
+        self.feature_rep_dict = {fd: OrderedDict() for fd in FEATURE_CLASSES}
 
         '''
         A dictionary containing the counts of each data regarding a feature class. For example in f100, would contain
@@ -79,9 +80,8 @@ class Feature2id:
         self.n_total_features = 0  # Total number of features accumulated
 
         # Init all features dictionaries
-        feature_classes = ("f100", "f101", "f102", "f103", "f104", "f105", "f106", "f107", "capital", "number")
         self.feature_to_idx = {}
-        for feature_class in feature_classes:
+        for feature_class in FEATURE_CLASSES:
             self.feature_to_idx[feature_class] = OrderedDict()
         self.represent_input_with_features = OrderedDict()
         self.h = OrderedDict()

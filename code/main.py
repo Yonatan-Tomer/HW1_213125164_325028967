@@ -6,7 +6,7 @@ from check_submission import compare_files
 
 
 def main():
-    threshold = 1
+    threshold = 100
     lam = 1
 
     train_path = "../data/train1.wtag"
@@ -15,8 +15,8 @@ def main():
     weights_path = '../weights.pkl'
     predictions_path = '../predictions.wtag'
 
-    # statistics, feature2id = preprocess_train(train_path, threshold)
-    # get_optimal_vector(statistics=statistics, feature2id=feature2id, weights_path=weights_path, lam=lam)
+    statistics, feature2id = preprocess_train(train_path, threshold)
+    get_optimal_vector(statistics=statistics, feature2id=feature2id, weights_path=weights_path, lam=lam)
 
     with open(weights_path, 'rb') as f:
         optimal_params, feature2id = pickle.load(f)

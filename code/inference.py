@@ -12,7 +12,7 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id, possible_tags):
     Implement q efficiently (refer to conditional probability definition in MEMM slides)
     """
     n = len(sentence)
-    beam = 10
+    beam = 3
     best_past_tags = {("*", "*"): (1, ("*", "*"))}
     features_num = feature2id.n_total_features
     # calc best route
@@ -24,13 +24,9 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id, possible_tags):
             for c_tag in possible_tags:
                 hist_ = history(sentence, k, pp_tag, p_tag, c_tag)
                 feature_vector = np.array(represent_input_with_features(hist_, feature2id.feature_to_idx))
-                try:
+                dot_product = 0
+                if feature_vector.shape[0] > 0:
                     dot_product = np.sum(pre_trained_weights[feature_vector])
-                except Exception as e:
-                    print(c_tag)
-                    print(feature_vector)
-                    print(pre_trained_weights)
-                    raise e
                 exp_weights_dot_feature_vectors[c_tag] = np.exp(dot_product)
             # the denominator for calculating c_pi
             denominator = sum(exp_weights_dot_feature_vectors.values())
