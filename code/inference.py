@@ -14,7 +14,6 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id, possible_tags):
     n = len(sentence)
     beam = 3
     best_past_tags = {("*", "*"): (1, ("*", "*"))}
-    features_num = feature2id.n_total_features
     # calc best route
     for k in range(2, n-1):  # scan over all histories
         c_pi = {}  # current probability matrix
@@ -24,9 +23,7 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id, possible_tags):
             for c_tag in possible_tags:
                 hist_ = history(sentence, k, pp_tag, p_tag, c_tag)
                 feature_vector = np.array(represent_input_with_features(hist_, feature2id.feature_to_idx))
-                dot_product = 0
-                if feature_vector.shape[0] > 0:
-                    dot_product = np.sum(pre_trained_weights[feature_vector])
+                dot_product = np.sum(pre_trained_weights[feature_vector])
                 exp_weights_dot_feature_vectors[c_tag] = np.exp(dot_product)
             # the denominator for calculating c_pi
             denominator = sum(exp_weights_dot_feature_vectors.values())
@@ -35,11 +32,11 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id, possible_tags):
                 soft_max_ = exp_weights_dot_feature_vectors[c_tag] / denominator
 
                 curr_prob = soft_max_ * best_past_tags[(pp_tag, p_tag)][0]
-                if (p_tag, c_tag) not in c_pi or curr_prob > c_pi[(p_tag, c_tag)][0]:
+                if ((p_tag, c_tag) not in c_pi) or (curr_prob > c_pi[(p_tag, c_tag)][0]):
                     c_pi[(p_tag, c_tag)] = [curr_prob, best_past_tags[(pp_tag, p_tag)][1] + (c_tag,)]
         # save {beam} best routs
         best_past_tags = {}
-        for pp_tag, p_tag in sorted(c_pi, key=c_pi.get, reverse=False)[:beam]:
+        for pp_tag, p_tag in sorted(c_pi, key=c_pi.get, reverse=True)[:beam]:
             best_past_tags[(pp_tag, p_tag)] = c_pi[(pp_tag, p_tag)]
 
     # pick best route

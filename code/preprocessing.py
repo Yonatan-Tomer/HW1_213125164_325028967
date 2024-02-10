@@ -6,7 +6,8 @@ from typing import List, Dict, Tuple
 WORD = 0
 TAG = 1
 
-FEATURE_CLASSES = ["f100", "f101", "f102", "f103", "f104", "f105", "f106", "f107", 'capital', 'number']
+FEATURE_CLASSES = ["f100", "f101", "f102", "f103", "f104", "f105", "f106", "f107",] #"capital", "number",
+                   # "contains hyphen", "pp_word"]
 
 
 class FeatureStatistics:
@@ -143,19 +144,15 @@ def history_to_data_and_class(history: Tuple):
         (c_tag, "f105"),
         ((p_word, c_tag), "f106"),
         ((n_word, c_tag), "f107"),
-        ((c_word.isnumeric(), c_tag), "number")
+        # ((any(ch.isdigit() for ch in c_word), c_tag), "number"),
+        # ((any(ch.isupper() for ch in c_word), c_tag), "capital"),
+        # (('-' in c_word, c_tag), "contains hyphen"),
+        # ((pp_word, c_tag), "pp_word")
     ]
     word_len = len(c_word)
     for i in range(0, min(word_len, 4)):
-        data_class_pairs.append(((c_word[word_len - i - 1:].lower(), c_tag), "f101"))
-        data_class_pairs.append(((c_word[:i + 1].lower(), c_tag), "f102"))
-
-    # capital
-    if c_word[0].isupper():
-        data_class_pairs.append(((c_word[0], c_tag), "capital"))
-        data_class_pairs.append(((True, c_tag), "capital"))
-    else:
-        data_class_pairs.append(((False, c_tag), "capital"))
+        data_class_pairs.append(((c_word[word_len - i - 1:], c_tag), "f101"))
+        data_class_pairs.append(((c_word[:i + 1], c_tag), "f102"))
 
     return data_class_pairs
 
