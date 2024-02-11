@@ -15,7 +15,7 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id, possible_tags):
     beam = 3
     best_past_tags = {("*", "*"): (1, ("*", "*"))}
     # calc best route
-    for k in range(2, n-1):  # scan over all histories
+    for k in range(2, n-2):  # scan over all histories
         c_pi = {}  # current probability matrix
         for pp_tag, p_tag in best_past_tags:  # scan for every beam
             exp_weights_dot_feature_vectors = {}  # the feature vectors of all history combinations
@@ -44,7 +44,7 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id, possible_tags):
 
 
 def history(sentence, k, pp_tag, p_tag, c_tag):
-    return sentence[k], c_tag, sentence[k - 1], p_tag, sentence[k - 2], pp_tag, sentence[k + 1]
+    return sentence[k], c_tag, sentence[k - 1], p_tag, sentence[k - 2], pp_tag, sentence[k + 1], sentence[k+2]
 
 
 def tag_all_test(test_path, pre_trained_weights, feature2id, predictions_path):

@@ -6,13 +6,14 @@ from typing import List, Dict, Tuple
 WORD = 0
 TAG = 1
 
-FEATURE_CLASSES = ["f100", "f101", "f102", "f103", "f104", "f105", "f106", "f107",] #"capital", "number",
-                   # "contains hyphen", "pp_word"]
+FEATURE_CLASSES = ["f100", "f101", "f102", "f103", "f104", "f105", "f106", "f107", "capital", "number",
+                   "contains hyphen", "pp_word", "f100_lower", "f101_lower", "f102_lower", "f106_lower",
+                   "f107_lower", "nn_word", "nn_word_lower", "c_word_n_word"]
 
 
 class FeatureStatistics:
     def __init__(self):
-        self.n_total_features = 0  # Total number of features accumulated
+        # self.n_total_features = 0  # Total number of features accumulated
 
         # Init all features dictionaries
         # the feature classes used in ,the code
@@ -49,13 +50,14 @@ class FeatureStatistics:
                 for pair in split_words:
                     sentence.append(tuple(pair.split("_")))
                 sentence.append(("~", "~"))
+                sentence.append(("~", "~"))
 
-                for i in range(2, len(sentence) - 1):
+                for i in range(2, len(sentence) - 2):
                     history = (
                         sentence[i][WORD], sentence[i][TAG], sentence[i - 1][WORD], sentence[i - 1][TAG],
                         sentence[i - 2][WORD],
-                        sentence[i - 2][TAG], sentence[i + 1][WORD])
-
+                        sentence[i - 2][TAG], sentence[i + 1][WORD], sentence[i + 2][WORD])
+                    # extract features from history and count them
                     data_class_pairs = history_to_data_and_class(history)
                     for feature_data, feature_class in data_class_pairs:
                         self.count_feature_data(feature_data, feature_class)
@@ -63,6 +65,9 @@ class FeatureStatistics:
                     self.histories.append(history)
 
     def count_feature_data(self, feature_data, feature_class):
+        """
+        Count a feature appearance
+        """
         if feature_data not in self.feature_rep_dict[feature_class]:
             self.feature_rep_dict[feature_class][feature_data] = 1
         else:
@@ -118,7 +123,7 @@ class Feature2id:
                 small_rows.append(small_r)
                 small_cols.append(c)
             for r, y_tag in enumerate(self.feature_statistics.tags):
-                demi_hist = (hist[0], y_tag, hist[2], hist[3], hist[4], hist[5], hist[6])
+                demi_hist = (hist[0], y_tag, hist[2], hist[3], hist[4], hist[5], hist[6], hist[7])
                 self.histories_features[demi_hist] = []
                 for c in represent_input_with_features(demi_hist, self.feature_to_idx):
                     big_rows.append(big_r)
@@ -136,7 +141,7 @@ class Feature2id:
 
 
 def history_to_data_and_class(history: Tuple):
-    c_word, c_tag, p_word, p_tag, pp_word, pp_tag, n_word = history
+    c_word, c_tag, p_word, p_tag, pp_word, pp_tag, n_word, nn_word = history
     data_class_pairs = [
         ((c_word, c_tag), "f100"),
         ((pp_tag, p_tag, c_tag), "f103"),
@@ -144,16 +149,24 @@ def history_to_data_and_class(history: Tuple):
         (c_tag, "f105"),
         ((p_word, c_tag), "f106"),
         ((n_word, c_tag), "f107"),
-        # ((any(ch.isdigit() for ch in c_word), c_tag), "number"),
-        # ((any(ch.isupper() for ch in c_word), c_tag), "capital"),
-        # (('-' in c_word, c_tag), "contains hyphen"),
-        # ((pp_word, c_tag), "pp_word")
+        ((any(ch.isdigit() for ch in c_word), c_tag), "number"),
+        ((any(ch.isupper() for ch in c_word), c_tag), "capital"),
+        (('-' in c_word, c_tag), "contains hyphen"),
+        ((pp_word, c_tag), "pp_word"),
+        ((c_word.lower(), c_tag), "f100_lower"),
+        ((p_word.lower(), c_tag), "f106_lower"),
+        ((n_word.lower(), c_tag), "f107_lower"),
+        ((nn_word, c_tag), "nn_word"),
+        ((nn_word.lower(), c_tag), "nn_word_lower"),
+        ((c_word, n_word, c_tag), "c_word_n_word")
     ]
     word_len = len(c_word)
     for i in range(0, min(word_len, 4)):
         data_class_pairs.append(((c_word[word_len - i - 1:], c_tag), "f101"))
         data_class_pairs.append(((c_word[:i + 1], c_tag), "f102"))
 
+        data_class_pairs.append(((c_word[word_len - i - 1:].lower(), c_tag), "f101_lower"))
+        data_class_pairs.append(((c_word[:i + 1].lower(), c_tag), "f102_lower"))
     return data_class_pairs
 
 
@@ -220,6 +233,8 @@ def read_test(file_path, tagged=True) -> List[Tuple[List[str], List[str]]]:
                 sentence[WORD].append(cur_word)
                 sentence[TAG].append(cur_tag)
             sentence[WORD].append("~")
+            sentence[WORD].append("~")
+            sentence[TAG].append("~")
             sentence[TAG].append("~")
             list_of_sentences.append(sentence)
     return list_of_sentences
