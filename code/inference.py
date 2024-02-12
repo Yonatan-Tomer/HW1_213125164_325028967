@@ -12,7 +12,7 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id, possible_tags):
     Implement q efficiently (refer to conditional probability definition in MEMM slides)
     """
     n = len(sentence)
-    beam = 3
+    beam = 20
     best_past_tags = {("*", "*"): (1, ("*", "*"))}
     # calc best route
     for k in range(2, n-2):  # scan over all histories
@@ -40,7 +40,7 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id, possible_tags):
             best_past_tags[(pp_tag, p_tag)] = c_pi[(pp_tag, p_tag)]
 
     # pick best route
-    return best_past_tags[max(best_past_tags)][1]
+    return best_past_tags[max(best_past_tags, key=best_past_tags.get)][1]
 
 
 def history(sentence, k, pp_tag, p_tag, c_tag):

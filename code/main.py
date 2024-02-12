@@ -6,8 +6,8 @@ from check_submission import compare_files
 
 
 def main():
-    threshold = 2
-    lam = 10
+    threshold = 1
+    lam = 1
 
     train_path = "../data/train1.wtag"
     test_path = "../data/test1.wtag"

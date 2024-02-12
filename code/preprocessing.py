@@ -2,13 +2,14 @@ from scipy import sparse
 from collections import OrderedDict, defaultdict
 import numpy as np
 from typing import List, Dict, Tuple
+from matplotlib import pyplot as plt
 
 WORD = 0
 TAG = 1
 
 FEATURE_CLASSES = ["f100", "f101", "f102", "f103", "f104", "f105", "f106", "f107", "capital", "number",
                    "contains hyphen", "pp_word", "f100_lower", "f101_lower", "f102_lower", "f106_lower",
-                   "f107_lower", "nn_word", "nn_word_lower", "c_word_n_word"]
+                   "f107_lower", "nn_word", "nn_word_lower", "c_word_n_word", "length", "2words", "3words"]
 
 
 class FeatureStatistics:
@@ -72,6 +73,8 @@ class FeatureStatistics:
             self.feature_rep_dict[feature_class][feature_data] = 1
         else:
             self.feature_rep_dict[feature_class][feature_data] += 1
+
+
 
 
 class Feature2id:
@@ -158,7 +161,10 @@ def history_to_data_and_class(history: Tuple):
         ((n_word.lower(), c_tag), "f107_lower"),
         ((nn_word, c_tag), "nn_word"),
         ((nn_word.lower(), c_tag), "nn_word_lower"),
-        ((c_word, n_word, c_tag), "c_word_n_word")
+        ((c_word, n_word, c_tag), "c_word_n_word"),
+        ((len(c_word), c_tag), "length"),
+        ((c_word, p_word, c_tag), "2words"),
+        ((c_word, p_word, pp_word, c_tag), "3words"),
     ]
     word_len = len(c_word)
     for i in range(0, min(word_len, 4)):
