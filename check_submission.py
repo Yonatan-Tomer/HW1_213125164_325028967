@@ -18,7 +18,7 @@ if not os.path.exists(COMP_FILES_PATH):
     os.makedirs(COMP_FILES_PATH)
     os.makedirs(f"{COMP_FILES_PATH}/{ID1}_{ID2}")
 
-def compare_files(true_file, pred_file):
+def compare_files(true_file, pred_file, return_confusion_matrix):
     with open(true_file, 'r') as f:
         true_data = [x.strip() for x in f.readlines() if x != '']
     with open(pred_file, 'r') as f:
@@ -73,9 +73,11 @@ def compare_files(true_file, pred_file):
     labels = sorted(list(set(true_labels)))
     if len(prob_sent) > 0:
         print(prob_sent)
-    # conf_mat = confusion_matrix(y_true=true_labels, y_pred=predictions, labels=labels)
-    # conf_mat = pd.DataFrame(conf_mat, index=labels, columns=labels)
-    # return num_correct / num_total, prob_sent, conf_mat
+
+    if return_confusion_matrix:
+        conf_mat = confusion_matrix(y_true=true_labels, y_pred=predictions, labels=labels)
+        conf_mat = pd.DataFrame(conf_mat, index=labels, columns=labels)
+        return num_correct / num_total, prob_sent, conf_mat
     return num_correct / num_total, prob_sent
 
 
