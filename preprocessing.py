@@ -51,7 +51,7 @@ class FeatureStatistics:
                 for pair in split_words:
                     sentence.append(tuple(pair.split("_")))
                 sentence.append(("~", "~"))
-                sentence.append(("~", "~"))
+                sentence.append(("~", "~"))  # look 2 words ahead
 
                 for i in range(2, len(sentence) - 2):
                     history = (
@@ -74,8 +74,6 @@ class FeatureStatistics:
                 self.feature_rep_dict[feature_class][feature_data] = 1
             else:
                 self.feature_rep_dict[feature_class][feature_data] += 1
-
-
 
 
 class Feature2id:
@@ -145,6 +143,9 @@ class Feature2id:
 
 
 def history_to_data_and_class(history: Tuple):
+    """
+    Convert history to feature data and feature class tuples
+    """
     c_word, c_tag, p_word, p_tag, pp_word, pp_tag, n_word, nn_word = history
     data_class_pairs = [
         ((c_word, c_tag), "f100"),
@@ -240,7 +241,7 @@ def read_test(file_path, tagged=True) -> List[Tuple[List[str], List[str]]]:
                 sentence[TAG].append(cur_tag)
             sentence[WORD].append("~")
             sentence[WORD].append("~")
-            sentence[TAG].append("~")
+            sentence[TAG].append("~")  # look 2 words ahead
             sentence[TAG].append("~")
             list_of_sentences.append(sentence)
     return list_of_sentences

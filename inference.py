@@ -46,6 +46,9 @@ def memm_viterbi(sentence, pre_trained_weights, feature2id, possible_tags):
 
 
 def history(sentence, k, pp_tag, p_tag, c_tag):
+    """
+    Convert parameters to history in form of list
+    """
     return sentence[k], c_tag, sentence[k - 1], p_tag, sentence[k - 2], pp_tag, sentence[k + 1], sentence[k+2]
 
 
